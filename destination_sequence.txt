@@ -1,0 +1,16 @@
+class dest_sequence extends uvm_sequence #(dest_xtn);
+`uvm_object_utils(dest_sequence)
+ function new(string name="dest_sequence");
+       super.new(name);
+ endfunction
+  task body();
+        //task body();
+       repeat(1)
+             begin
+                 req=dest_xtn::type_id::create("req");
+                 start_item(req);
+                   assert(req.randomize() with{delay==30;});
+                 finish_item(req); 
+             end
+   endtask 
+endclass

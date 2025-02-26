@@ -1,0 +1,57 @@
+class smonitor extends uvm_monitor;
+    `uvm_component_utils(smonitor)
+  source_config scfg;
+  //env_config env_cfg;
+ virtual rtr_src_inf.MON_DUV m_vinf;
+ uvm_analysis_port #(source_xtn) s_ap;
+     function new(string name="monitor",uvm_component parent);
+           super.new(name,parent);
+            s_ap=new("s_ap",this);
+     endfunction
+     function void build_phase(uvm_phase phase);
+           super.build_phase(phase);
+           if(!uvm_config_db #(source_config)::get(this,"","source_config",scfg))
+              `uvm_fatal("source_config","could not get scfg.have u set it ?")
+     endfunction
+     function void connect_phase(uvm_phase phase);
+           m_vinf=scfg.rs_vif;
+     endfunction
+     task run_phase(uvm_phase phase);
+            forever
+                  begin
+                          collect_data();
+                  end
+    endtask
+    task collect_data();
+           source_xtn xtn;
+            xtn=source_xtn::type_id::create("xtn");
+            while(m_vinf.MON_CB.busy)
+                @(m_vinf.MON_CB);
+            while(m_vinf.MON_CB.pkt_valid==0)
+                 @(m_vinf.MON_CB);
+                xtn.header=m_vinf.MON_CB.data_in;
+                 @(m_vinf.MON_CB); 
+                xtn.payload=new[xtn.header[7:2]];
+               // @(m_vinf.MON_CB);
+                       foreach(xtn.payload[i])
+                            begin
+                                  while(m_vinf.MON_CB.busy)
+                                         @(m_vinf.MON_CB);
+                                  xtn.payload[i]=m_vinf.MON_CB.data_in;
+                                  @(m_vinf.MON_CB);
+                            end
+                   while(m_vinf.MON_CB.busy) 
+                       @(m_vinf.MON_CB);
+                       xtn.parity=m_vinf.MON_CB.data_in;
+                 repeat(1)
+                       @(m_vinf.MON_CB);
+                           xtn.error=m_vinf.MON_CB.error;
+                           s_ap.write(xtn);
+                 // `uvm_info(get_type_name(),"the monitor driving data to scoreboard",UVM_LOW);
+             // `uvm_info("router_src_monitor",$sformatf("print from src monitor\n %s",xtn.sprint()),UVM_LOW)
+                $display("*****************SOURCE MONITOR DATA******************");           
+		xtn.print();
+       endtask           
+                                    
+
+endclass

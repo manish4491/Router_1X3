@@ -1,0 +1,30 @@
+class sagent_top extends uvm_env;
+    `uvm_component_utils(sagent_top)
+         // sagent sagenth;
+          sagent sagenth[];
+
+          env_config env_cfg;
+
+      function new(string name ="sagent_top",uvm_component parent);
+            super.new(name,parent);
+      endfunction
+
+     function void build_phase(uvm_phase phase);
+          super.build_phase(phase);
+
+
+                if(!uvm_config_db#(env_config)::get(this,"","env_config",env_cfg))
+                        `uvm_fatal("THIS SRC AGT TOP","get is failed");
+           sagenth=new[env_cfg.no_of_src_agents];
+
+         foreach(sagenth[i])
+                   begin
+                           sagenth[i]=sagent::type_id::create($sformatf("sagenth[%0d]",i),this);
+                           //sagenth=sagent::type_id::create(sagenth,this);
+                           //uvm_config_db #(source_config)::set(this,"sagenth*","source_config",env_cfg.scfg);
+
+                           uvm_config_db #(source_config)::set(this,$sformatf("sagenth[%0d]*",i),"source_config",env_cfg.scfg[i]);
+                            //$display("-----------------source_cfg_set------------",env_cfg.scfg[i]);
+                  end
+     endfunction
+endclass

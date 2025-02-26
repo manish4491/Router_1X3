@@ -1,0 +1,45 @@
+class d_driver extends uvm_driver #(dest_xtn);
+   `uvm_component_utils(d_driver)
+   dest_config dcfg;
+   //env_config env_cfg;
+   virtual rtr_dest_inf.DRV_DUV d_vinf;
+   function new(string name ="d_driver",uvm_component parent);
+             super.new(name,parent);
+   endfunction
+   function void build_phase(uvm_phase phase);
+           super.build_phase(phase);
+           if(!uvm_config_db #(dest_config)::get(this,"","dest_config",dcfg))
+               `uvm_fatal("dest_config","could not get dcfg. have u set it ?")
+     endfunction
+    function void connect_phase(uvm_phase phase);
+           d_vinf=dcfg.d_vinf;
+    endfunction
+      task run_phase(uvm_phase phase);
+                 forever 
+                    begin
+                             seq_item_port.get_next_item(req);
+                                     send_to_dut(req);
+                             seq_item_port.item_done();
+                    end
+      endtask
+      task send_to_dut(dest_xtn xtn);
+            // @(d_vinf.DRV_CB);
+             while(d_vinf.DRV_CB.valid_out==0)
+                     @(d_vinf.DRV_CB);
+	//	$display("*********TO CHECK valid_0 IN DST_DRV");
+             d_vinf.DRV_CB.read_enb<=1'b1;
+              //  @(d_vinf.DRV_CB);
+             while(d_vinf.DRV_CB.valid_out==1) begin
+//	$display("*********TO CHECK valid_out IN DST_DRV");
+
+                      @(d_vinf.DRV_CB);
+	end
+             d_vinf.DRV_CB.read_enb<=1'b0;
+             @(d_vinf.DRV_CB);
+ 		//`uvm_info("ROUTER_DEST_DRIVER",$sformatf("printing from dest_driver \n %s",xtn.sprint()),UVM_LOW)
+                $display("***********DES DRIVER***********************");
+		xtn.print();
+      endtask
+
+endclass
+

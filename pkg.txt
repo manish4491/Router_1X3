@@ -1,0 +1,29 @@
+package router_test_pkg;
+
+        import uvm_pkg::*;
+        `include "uvm_macros.svh"
+
+
+        `include "source_txn.sv"
+        `include "dest_txn.sv"
+        `include "source_seqs.sv"
+        `include "dest_seqs.sv"
+        `include "source_agent_config.sv"
+        `include "dest_agent_config.sv"
+        `include "env_config.sv"
+        `include "source_monitor.sv"
+        `include "source_driver.sv"
+        `include "source_sequencer.sv"
+        `include "dest_seqr.sv"
+        `include "dest_driver.sv"
+        `include "dest_monitor.sv"
+        `include "source_agent.sv"
+        `include "dest_agent.sv"
+        `include "source_agent_top.sv"
+        `include "dest_agent_top.sv"
+        `include "virtual_sequencer.sv"
+        `include "virtual_sequences.sv"
+        `include "scoreboard.sv"
+        `include "env.sv"
+        `include "base_test.sv"
+endpackage

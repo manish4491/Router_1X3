@@ -1,0 +1,129 @@
+class scoreboard extends uvm_scoreboard;
+	`uvm_component_utils(scoreboard)
+	
+	env_config env_cfg;
+	uvm_tlm_analysis_fifo #(source_xtn) fifo1[];
+	uvm_tlm_analysis_fifo #(dest_xtn) fifo2[];
+	source_xtn xtn1;
+	dest_xtn xtn2;
+
+	source_xtn src_cov_data;
+	dest_xtn dst_cov_data;
+
+	covergroup src_fcov1;
+		option.per_instance=1;
+		
+			HEADER :coverpoint src_cov_data.header[1:0]{
+								bins b0={0,1,2};
+								illegal_bins b1={3};}
+			LENGTH :coverpoint src_cov_data.header[7:2]{
+								bins low={[0:15]};
+								bins mid={[16:30]};
+								bins high={[31:63]};}
+			CROSS :cross HEADER,LENGTH;
+	endgroup
+
+	covergroup dst_fcov1;
+		option.per_instance=1;
+		
+			HEADER :coverpoint dst_cov_data.header[1:0]{
+								bins b0={0,1,2};
+								illegal_bins b1={3};}
+			LENGTH :coverpoint dst_cov_data.header[7:2]{
+								bins low={[0:15]};
+								bins mid={[16:30]};
+								bins high={[31:63]};}
+			CROSS :cross HEADER,LENGTH;
+	endgroup
+
+
+function new(string name="scoreboard",uvm_component parent);
+	super.new(name,parent);
+	src_fcov1 = new();
+	dst_fcov1 = new();
+
+endfunction
+
+function void build_phase(uvm_phase phase);
+	super.build_phase(phase);
+	if(!uvm_config_db #(env_config)::get(this,"","env_config",env_cfg))
+		`uvm_fatal("CONFIG","cannot get() ecfg from uvm_config_db")
+	fifo1 = new[env_cfg.no_of_src_agents];
+	fifo2 = new[env_cfg.no_of_dest_agents];
+
+	foreach(fifo1[i])
+		fifo1[i]=new($sformatf("fifo1[%0d]",i),this);
+	foreach(fifo2[i])
+		fifo2[i]=new($sformatf("fifo2[%0d]",i),this);
+
+endfunction
+
+task run_phase(uvm_phase phase);
+	super.run_phase(phase);
+	forever
+	begin
+		fork
+			begin
+				fifo1[0].get(xtn1);
+				`uvm_info("SB","get the sxtn",UVM_NONE)
+				xtn1.print();
+					src_cov_data=xtn1;
+				        src_fcov1.sample();
+			end
+			begin
+			fork
+			    begin
+				fifo2[0].get(xtn2);
+				`uvm_info("SB","get the dxtn",UVM_NONE)
+				xtn2.print();
+				dst_cov_data=xtn2;
+				dst_fcov1.sample();
+			    end
+			    begin
+				fifo2[1].get(xtn2);
+				`uvm_info("SB","get the dxtn",UVM_NONE)
+				xtn2.print();
+				dst_cov_data=xtn2;
+				dst_fcov1.sample();
+
+			    end
+			    begin
+				fifo2[2].get(xtn2);
+				`uvm_info("SB","get the dxtn",UVM_NONE)
+				xtn2.print();
+				dst_cov_data=xtn2;
+				dst_fcov1.sample();
+
+			    end
+			join_any
+			end
+		join
+
+	data_compare(xtn1,xtn2);
+	end
+
+endtask
+
+
+task data_compare(source_xtn xtn1,dest_xtn xtn2);
+	//begin
+	if(xtn1.header == xtn2.header)
+		`uvm_info("sb","header matched",UVM_LOW)
+	else
+		`uvm_info("sb","header not matched",UVM_LOW)
+//	end
+//	begin
+	if(xtn1.payload == xtn2.payload)
+		`uvm_info("sb","payload mathed",UVM_LOW)
+	else
+		`uvm_info("sb","payload not matched",UVM_LOW)
+//	end
+//	begin
+	if(xtn1.parity == xtn2.parity)
+		`uvm_info("sb","parity matched",UVM_LOW)
+	else
+		`uvm_info("sb","parity not matched",UVM_LOW)
+//	end
+endtask
+endclass
+

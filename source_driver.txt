@@ -1,0 +1,59 @@
+class sdriver extends uvm_driver #(source_xtn);
+   `uvm_component_utils(sdriver)
+  //source_xtn xtn;
+  source_config scfg;
+  //env_config env_cfg;
+  virtual rtr_src_inf.DRV_DUV sa_vinf;
+   function new(string name ="sdriver",uvm_component parent);
+             super.new(name,parent);
+   endfunction
+   function void build_phase(uvm_phase phase);
+           super.build_phase(phase);
+           if(!uvm_config_db #(source_config)::get(this,"","source_config",scfg))
+                `uvm_fatal("source_config","could not get scfg.have u set it ?")
+    endfunction       
+    function void connect_phase(uvm_phase phase);
+           sa_vinf=scfg.rs_vif;
+    endfunction
+    task run_phase(uvm_phase phase);
+//`uvm_info("ROUTER_SRC_DRIVER",$sformatf("printing from driver \n %s",xtn.sprint()),UVM_LOW)
+
+         @(sa_vinf.DRV_CB)
+              sa_vinf.DRV_CB.resetn<=1'b0;
+        @(sa_vinf.DRV_CB)
+               sa_vinf.DRV_CB.resetn<=1'b1;
+        forever
+            begin
+                seq_item_port.get_next_item(req);
+                     send_to_dut(req);
+                seq_item_port.item_done();
+            end
+    endtask
+
+    task send_to_dut(source_xtn xtn);
+        while(sa_vinf.DRV_CB.busy)
+             @(sa_vinf.DRV_CB);
+                 sa_vinf.DRV_CB.data_in<=xtn.header;
+                 sa_vinf.DRV_CB.pkt_valid<=1'b1;
+             @(sa_vinf.DRV_CB);
+         foreach(xtn.payload[i])
+	             begin
+                  while(sa_vinf.DRV_CB.busy)
+                         @(sa_vinf.DRV_CB);
+                  sa_vinf.DRV_CB.data_in<=xtn.payload[i]; // Error Should wait for a clocking event then drive the payload length
+                  @(sa_vinf.DRV_CB);
+             end
+	// Should make the packet valid low while driving the last byte of the payload data
+         while(sa_vinf.DRV_CB.busy) // Should wait for a clocking event then drive the parity
+               @(sa_vinf.DRV_CB);
+         sa_vinf.DRV_CB.data_in<=xtn.parity;
+         sa_vinf.DRV_CB.pkt_valid<=1'b0;
+         @(sa_vinf.DRV_CB);
+         @(sa_vinf.DRV_CB);
+
+	//`uvm_info("ROUTER_SRC_DRIVER",$sformatf("printing from driver \n %s",xtn.sprint()),UVM_LOW)
+	$display("************* DRVING THE DATA*******************");
+        xtn.print();
+  endtask            
+         
+endclass

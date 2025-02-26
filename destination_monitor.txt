@@ -1,0 +1,49 @@
+class dmonitor extends uvm_monitor;
+    `uvm_component_utils(dmonitor)
+     //env_config env_cfg;
+     dest_config dcfg;
+     virtual rtr_dest_inf.MON_DUV m_vinf;
+     uvm_analysis_port #(dest_xtn) d_ap;
+     function new(string name="dmonitor",uvm_component parent);
+           super.new(name,parent);
+           d_ap=new("d_ap",this);
+     endfunction
+     function void build_phase(uvm_phase phase);
+          super.build_phase(phase);
+         if(!uvm_config_db #(dest_config)::get(this,"","dest_config",dcfg))
+            //req=dest_xtn::type_id::create("req");
+            `uvm_fatal("dest_config","could not get dcfg.have u set it ?")
+     endfunction
+     function void connect_phase(uvm_phase phase);
+          m_vinf=dcfg.d_vinf;
+     endfunction
+     task run_phase(uvm_phase phase);               	
+         forever
+		begin
+	             collect_data();
+		end
+     endtask
+     task collect_data();
+          dest_xtn xtn;
+          xtn=dest_xtn::type_id::create("xtn");
+                 @(m_vinf.MON_CB);
+          while(!m_vinf.MON_CB.read_enb)
+                 @(m_vinf.MON_CB);
+                 @(m_vinf.MON_CB);
+             xtn.header=m_vinf.MON_CB.data_out;
+                 @(m_vinf.MON_CB);
+             xtn.payload=new[xtn.header[7:2]];
+                 foreach(xtn.payload[i])
+                 begin
+                         xtn.payload[i]=m_vinf.MON_CB.data_out;
+                         @(m_vinf.MON_CB);
+                 end
+                 xtn.parity=m_vinf.MON_CB.data_out;
+                 //@(m_vinf.MON_CB);
+               $display("*****************DEST MONITOR DATA*********************");
+                    xtn.print();
+                  d_ap.write(xtn);
+               `uvm_info(get_type_name(),"the monitor driving data to scoreboard",UVM_LOW);
+                   //xtn.print();
+     endtask
+endclass

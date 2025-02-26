@@ -1,0 +1,6 @@
+class dsequencer extends uvm_sequencer #(dest_xtn);
+     `uvm_component_utils(dsequencer)
+      function new(string name="sequencer",uvm_component parent);
+                     super.new(name,parent);
+      endfunction
+endclass

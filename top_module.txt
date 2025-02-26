@@ -1,0 +1,53 @@
+module top;
+	import router_test_pkg::*;
+	import uvm_pkg::*;
+	`include "uvm_macros.svh"
+	bit clock;
+	always
+	begin
+ 		forever  #10 clock=~clock;
+	end
+rtr_src_inf sinf(clock);
+rtr_dest_inf dinf0(clock);
+rtr_dest_inf dinf1(clock);
+rtr_dest_inf dinf2(clock);
+
+router_top RDUV(.router_clock(clock),.resetn(sinf.resetn),.data_in(sinf.data_in),.pkt_valid(sinf.pkt_valid),.err(sinf.error),.busy(sinf.busy),
+               .read_enb_0(dinf0.read_enb),.read_enb_1(dinf1.read_enb),.read_enb_2(dinf2.read_enb),
+               .data_out_0(dinf0.data_out),.data_out_1(dinf1.data_out),.data_out_2(dinf2.data_out),
+               .vld_out_0(dinf0.valid_out),.vld_out_1(dinf1.valid_out),.vld_out_2(dinf2.valid_out));
+
+/*router_top(input          router_clock,
+		  input          resetn,
+		  input          pkt_valid,
+		  input    [7:0] data_in,
+		  input          read_enb_0,
+		  input          read_enb_1,
+		  input          read_enb_2,
+
+		  output   [7:0] data_out_0,
+		  output   [7:0] data_out_1,
+		  output   [7:0] data_out_2,
+	 	  output         vld_out_0,
+		  output	 vld_out_1,
+		  output	 vld_out_2,
+		  output         busy,
+		  output         err );  
+
+
+*/
+
+initial
+   begin
+                        `ifdef VCS
+         		$fsdbDumpvars(0, top);
+        		`endif
+
+     uvm_config_db #(virtual rtr_src_inf)::set(null,"*","svif0",sinf);
+     uvm_config_db #(virtual rtr_dest_inf)::set(null,"*","dvif0",dinf0);
+     uvm_config_db #(virtual rtr_dest_inf)::set(null,"*","dvif1",dinf1);
+     uvm_config_db #(virtual rtr_dest_inf)::set(null,"*","dvif2",dinf2);
+
+       run_test();
+   end
+endmodule

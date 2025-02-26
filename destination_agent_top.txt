@@ -1,0 +1,27 @@
+class dagent_top extends uvm_env;
+
+ `uvm_component_utils(dagent_top)
+
+ dagent  dagenth[];
+ env_config env_cfg;
+ //dest_config dcfg[];
+      function new(string name ="dagent_top",uvm_component parent);
+             super.new(name,parent);
+      endfunction
+      function void build_phase(uvm_phase phase);
+             super.build_phase(phase);
+    if(!uvm_config_db #(env_config)::get(this,"","env_config",env_cfg))
+                  `uvm_fatal("env_config","could not get env_cfg .have you set it?");
+           dagenth=new[env_cfg.no_of_dest_agents];	
+	
+             foreach(dagenth[i])
+                begin
+                     dagenth[i]=dagent::type_id::create($sformatf("dagenth[%0d]",i),this);
+
+                    uvm_config_db #(dest_config)::set(this,$sformatf("dagenth[%0d]*",i),"dest_config",env_cfg.dcfg[i]);
+                           //:$display("----------------dcfg_set-------------",env_cfg.dcfg[i]);	
+
+                 end
+
+      endfunction
+endclass

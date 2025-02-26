@@ -1,0 +1,27 @@
+interface rtr_src_inf (input bit clock);
+ logic [7:0]data_in;
+ logic resetn;
+ bit pkt_valid,busy,error;
+ clocking DRV_CB@(posedge clock);
+   default input #1 output #0;
+     output resetn;
+     output data_in;
+     output pkt_valid;
+     input busy;
+     input error;
+   //modport MON_DUV (input data_in,resetn,pkt_valid, output busy,error);
+ endclocking
+     modport DRV_DUV(clocking DRV_CB);
+
+ clocking MON_CB@(posedge clock);
+     default input #1 output #0;
+       input resetn;
+       input data_in;
+       input pkt_valid;
+       input busy;
+       input error;
+   //modport MON_DUV (input busy,error,output data_in,resetn,pkt_valid);
+ endclocking
+      modport MON_DUV(clocking MON_CB);
+
+endinterface

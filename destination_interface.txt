@@ -1,0 +1,23 @@
+interface rtr_dest_inf(input bit clock);
+   logic [7:0]data_out;
+   bit valid_out;
+   bit read_enb;
+clocking DRV_CB @(posedge clock);
+  default input #1 output #0;
+   input data_out;
+   input valid_out;
+   output read_enb;
+//  modport DRV_DUV(input read_enb,output data_out,valid_out);
+endclocking
+  modport DRV_DUV(clocking DRV_CB);
+
+clocking MON_CB @(posedge clock);
+  default input #1 output #0;
+    input data_out;
+    input valid_out;
+    input read_enb;
+ // modport MON_DUV(input data_out,valid_out,output read_enb);
+
+endclocking
+  modport MON_DUV(clocking MON_CB);
+endinterface

@@ -1,0 +1,43 @@
+class environment extends uvm_env;
+   `uvm_component_utils(environment)
+     sagent_top sagnth;
+     dagent_top dagnth;
+     env_config env_cfg;
+     virtual_sequencer  vseqrh;
+    scoreboard scrb;
+     sagent src_agnt[];
+     dagent dest_agnt[];  
+    function new(string name ="environment",uvm_component parent);
+         super.new(name,parent);
+  endfunction
+  function void build_phase(uvm_phase phase);
+         super.build_phase(phase);
+
+             sagnth=sagent_top::type_id::create("sagnth",this);
+ 	     dagnth=dagent_top::type_id::create("dagnth",this);
+             vseqrh=virtual_sequencer::type_id::create("vseqrh",this);
+             scrb=scoreboard::type_id::create("scrb",this);
+         if(!uvm_config_db #(env_config)::get(this,"","env_config",env_cfg))
+                  `uvm_fatal("env_config","could not get env_cfg .have you set it?");
+         endfunction
+  function void connect_phase(uvm_phase phase);
+        super.connect_phase(phase);
+         src_agnt=new[env_cfg.no_of_src_agents];
+         dest_agnt=new[env_cfg.no_of_dest_agents];
+     foreach(src_agnt[i])
+        begin
+             vseqrh.src_seqrh[i]=sagnth.sagenth[i].s_seqrh;
+        end
+      foreach(dest_agnt[i])
+         begin
+             vseqrh.dest_seqrh[i]=dagnth.dagenth[i].dseqrh;
+         end
+
+        sagnth.sagenth[0].smonh.s_ap.connect(scrb.fifo1[0].analysis_export);
+        dagnth.dagenth[0].dmonh.d_ap.connect(scrb.fifo2[0].analysis_export);
+	dagnth.dagenth[1].dmonh.d_ap.connect(scrb.fifo2[1].analysis_export);
+	dagnth.dagenth[2].dmonh.d_ap.connect(scrb.fifo2[2].analysis_export);
+
+ 
+  endfunction
+endclass

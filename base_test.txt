@@ -1,0 +1,185 @@
+class test extends uvm_test;
+    `uvm_component_utils(test)
+   bit [1:0]addr=$urandom%3;
+     environment envh;
+     //sagent sagenth[];
+     source_config sa_cfg[];
+     dest_config da_cfg[];
+
+
+     env_config env_cfg; 
+   
+    int no_of_src_agents=1;
+    int no_of_dest_agents=3;
+	bit src_agt_top=1;
+	bit dst_agt_top=1;
+
+    function new(string name="test",uvm_component parent);
+          super.new(name,parent);
+   endfunction
+
+   function void build_phase(uvm_phase phase);
+          super.build_phase(phase);
+
+
+	
+
+env_cfg=env_config::type_id::create("env_cfg");
+
+env_cfg.dcfg = new[no_of_dest_agents];
+env_cfg.scfg = new[no_of_src_agents];
+
+
+    if(src_agt_top)
+         begin
+           sa_cfg=new[no_of_src_agents]; 
+      	    foreach(sa_cfg[i])
+              begin                             
+                sa_cfg[i]=source_config::type_id::create($sformatf("sa_cfg[%0d]",i));
+                sa_cfg[i].is_active=UVM_ACTIVE;
+	      if(!uvm_config_db #(virtual rtr_src_inf)::get(this,"", $sformatf("svif%0d",i),sa_cfg[i].rs_vif))
+	         `uvm_fatal("VIF CONFIG","cannot get()interface vif from uvm_config_db. Have you set() it?") 
+                             // $display("-----------interface_get--------",sa_cfg[i].rs_vif);
+                 env_cfg.scfg[i]=sa_cfg[i];
+             end
+
+        end
+
+	if(dst_agt_top)
+	 begin
+             da_cfg=new[no_of_dest_agents];
+      		foreach(da_cfg[i])
+            	  begin
+                  da_cfg[i]=dest_config::type_id::create($sformatf("da_cfg[%0d]",i));
+                   if(!uvm_config_db #(virtual rtr_dest_inf)::get(this,"", $sformatf("dvif%0d",i),da_cfg[i].d_vinf))
+		`uvm_fatal("VIF CONFIG","cannot get()interface vif from uvm_config_db. Have you set() it?") 
+
+                  env_cfg.dcfg[i]=da_cfg[i];
+            	   end
+	end
+
+	
+
+       env_cfg.no_of_src_agents=no_of_src_agents;
+       env_cfg.no_of_dest_agents=no_of_dest_agents;
+
+
+		
+		 uvm_config_db #(env_config)::set(this,"*","env_config",env_cfg);
+
+		envh=environment::type_id::create("envh",this);
+            //setting addr
+              //addr=$urandom%3;
+            uvm_config_db #(bit[1:0])::set(this,"*","bit",addr);
+            //  $display("--------set_bit--------",addr);
+   endfunction
+   //function void router_config();
+            
+
+
+   function void end_of_elaboration_phase(uvm_phase phase);
+            uvm_top.print_topology();
+   endfunction
+
+
+endclass
+
+
+class small_test extends test;
+   `uvm_component_utils(small_test)
+// small_pkt rseqh;
+ //sequence1 dseqh;
+ vseq_small_pkt s_pkt;
+  // bit [1:0]addr = 2'b00;
+  //bit [1:0] addr=$urandom%3;
+
+  function new(string name ="small_test",uvm_component parent);
+       super.new(name,parent);
+ endfunction
+
+function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+endfunction
+
+ task run_phase(uvm_phase phase);
+      phase.raise_objection(this);
+        	s_pkt=vseq_small_pkt::type_id::create("s_pkt",this);
+	      s_pkt.start(envh.vseqrh);
+	
+        /*rseqh=small_pkt::type_id::create("rseqh");
+        dseqh=sequence1::type_id::create("dseqh");
+	fork
+            begin
+             rseqh.start(envh.sagnth.sagenth[0].s_seqrh);
+            end
+            begin
+             if(addr==2'b00)
+               dseqh.start(envh.dagnth.dagenth[0].dseqrh);  
+             if(addr==2'b01)
+                dseqh.start(envh.dagnth.dagenth[1].dseqrh);
+             if(addr==2'b10)
+                dseqh.start(envh.dagnth.dagenth[2].dseqrh);  
+             end 
+        join */
+        phase.drop_objection(this);
+ endtask
+endclass
+
+
+ class medium_test extends test;
+   `uvm_component_utils(medium_test)
+   vseq_medium_pkt m_pkt;
+  function new(string name ="medium_test",uvm_component parent);
+       super.new(name,parent);
+ endfunction
+ function void build_phase(uvm_phase phase);
+       super.build_phase(phase);
+ endfunction
+ task run_phase(uvm_phase phase);
+      phase.raise_objection(this);
+      m_pkt=vseq_medium_pkt::type_id::create("m_pkt",this);
+	m_pkt.start(envh.vseqrh);
+        /*rseqh=medium_pkt::type_id::create("rseqh");                      
+            dseqh=sequence1::type_id::create("dseqh");
+             rseqh.start(envh.sagnth.sagenth[0].s_seqrh);
+             if(addr==2'b00)
+               dseqh.start(envh.dagnth.dagenth[0].dseqrh);   
+             if(addr==2'b01)
+                dseqh.start(envh.dagnth.dagenth[1].dseqrh);
+             if(addr==2'b10)
+                dseqh.start(envh.dagnth.dagenth[2].dseqrh); */ 
+             phase.drop_objection(this);
+ endtask
+endclass
+
+
+ class big_test extends test;
+
+   `uvm_component_utils(big_test)
+ //big_pkt rseqh;
+//sequence1 dseqh;
+ vseq_big_pkt b_pkt;
+  function new(string name ="big_test",uvm_component parent);
+       super.new(name,parent);
+ endfunction
+ function void build_phase(uvm_phase phase);
+       super.build_phase(phase);
+             //uvm_config_db #(bit[1:0])::set(this,"*","bit",addr);
+	//	$display("-----------set_bit--------------",addr);
+ endfunction
+ task run_phase(uvm_phase phase);
+      phase.raise_objection(this);
+        b_pkt=vseq_big_pkt::type_id::create("b_pkt",this);
+	b_pkt.start(envh.vseqrh);
+        /*rseqh=big_pkt::type_id::create("rseqh");  
+          dseqh=sequence1::type_id::create("dseqh");
+             rseqh.start(envh.sagnth.sagenth[0].s_seqrh);
+             if(addr==2'b00)
+               dseqh.start(envh.dagnth.dagenth[0].dseqrh);   
+             if(addr==2'b01)
+                dseqh.start(envh.dagnth.dagenth[1].dseqrh);
+             if(addr==2'b10)
+                dseqh.start(envh.dagnth.dagenth[2].dseqrh);  
+             phase.drop_objection(this);*/
+ endtask
+ endclass

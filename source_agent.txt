@@ -1,0 +1,28 @@
+class sagent extends uvm_agent;
+     `uvm_component_utils(sagent)
+     sdriver sdrvh;
+     s_sequencer s_seqrh;
+     smonitor smonh;
+     source_config scfg;
+function new(string name="sagent",uvm_component parent);
+  super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+   super.build_phase(phase);
+ if(!uvm_config_db #(source_config)::get(this,"","source_config",scfg))
+       `uvm_fatal("sorce_config","could not get scfg.have u set it ?")
+             smonh=smonitor::type_id::create("smonh",this);
+   if(scfg.is_active==UVM_ACTIVE)
+       begin
+               s_seqrh=s_sequencer::type_id::create("s_seqrh",this);
+               sdrvh=sdriver::type_id::create("sdrvh",this);
+       end
+endfunction
+
+function void connect_phase(uvm_phase phase);
+      if(scfg.is_active==UVM_ACTIVE)
+          begin
+                 sdrvh.seq_item_port.connect(s_seqrh.seq_item_export);
+          end
+endfunction
+endclass

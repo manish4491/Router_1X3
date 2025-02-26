@@ -1,0 +1,31 @@
+class dagent extends uvm_agent;
+     `uvm_component_utils(dagent)
+     d_driver d_drvh;
+     dsequencer dseqrh;
+     dmonitor dmonh;
+     dest_config dcfg;
+    //env_config env_cfg;
+ function new(string name="dagent",uvm_component parent);
+  super.new(name,parent);
+endfunction
+function void build_phase(uvm_phase phase);
+   super.build_phase(phase);
+     if(!uvm_config_db #(dest_config)::get(this,"","dest_config",dcfg))
+           `uvm_fatal("sorce_config","could not get scfg.have u set it ?")
+//$display("----------------dcfg-------------",dcfg);
+               dmonh=dmonitor::type_id::create("dmonh",this);
+
+//$display("dcfg",dcfg);
+      if(dcfg.is_active==UVM_ACTIVE)
+           begin
+               dseqrh=dsequencer::type_id::create("dseqrh",this);
+               d_drvh=d_driver::type_id::create("d_drvh",this);
+           end
+endfunction
+function void connect_phase(uvm_phase phase);
+   if(dcfg.is_active==UVM_ACTIVE)
+      begin
+         d_drvh.seq_item_port.connect(dseqrh.seq_item_export);
+      end
+endfunction
+endclass
